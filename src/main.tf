@@ -10,7 +10,19 @@ module "vpc" {
   enable_nat_gateway = true
   enable_vpn_gateway = true
 
-  tags = var.aws_project_tags
+  tags = merge(var.aws_project_tags, {
+    "kubernetes.io/cluster/${var.aws_eks_name}" = "shared"
+  })
+
+  public_subnet_tags = {
+    "kubernetes.io/cluster/${var.aws_eks_name}" = "shared"
+    "kubernetes.io/role/elb"                    = 1
+  }
+
+  private_subnet_tags = {
+    "kubernetes.io/cluster/${var.aws_eks_name}" = "shared"
+    "kubernetes.io/role/internal-elb"           = 1
+  }
 }
 
 module "eks" {
@@ -31,6 +43,7 @@ module "eks" {
       min_capacity     = 2
 
       instance_type = var.aws_eks_managed_node_groups_instance_type
+      tags          = var.aws_project_tags
     }
   }
 
